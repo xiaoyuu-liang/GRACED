@@ -1,0 +1,14 @@
+defaults:
+    - _self_
+    - general : general_default
+    - model : mpnn
+    - train : train_default
+    - dataset : mutag
+    - denoiser : denoiser_default
+
+hydra:
+  job:
+    chdir: True
+  run:
+    dir: .
+
