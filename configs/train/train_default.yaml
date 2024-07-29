@@ -1,6 +1,6 @@
 # Training settings
 n_epochs: 1000
-batch_size: 1
+batch_size: 128
 lr: 0.0002
 # shceduler_factor: 0.9
 # shceduler_patience: 5

@@ -20,12 +20,12 @@ class DataReader():
     '''
     def __init__(self,
                  data_dir,  # Folder with txt files
-                 random_walk,
-                 node2vec_hidden,
-                 walk_length,
-                 num_walk,
-                 p,
-                 q,
+                 random_walk=False,
+                 node2vec_hidden=64,
+                 walk_length=20,
+                 num_walk=10,
+                 p=0.65,
+                 q=0.35,
                  workers=3,
                  rnd_state=None,
                  use_cont_node_attr=False,  # Use or not additional float valued node attributes available in some datasets
@@ -165,6 +165,9 @@ class DataReader():
         data['N_nodes_max'] = np.max(shapes)  # Max number of nodes
         data['features_dim'] = features_dim
         data['n_classes'] = n_classes
+        data['feature_margin'] = [np.count_nonzero(features_all == u) / len(features_all) for u in np.unique(features_all)]
+        data['label_margin'] = [np.sum(labels == lbl) / len(data['adj_list']) for lbl in classes]
+        data['edge_margin'] = [np.sum(data['edge_matrix_count_list']) / np.sum([c**2 - c for c in data['node_count_list']])]
 
         # Make neighbor dictionary
         #data['neighbor_dic_list'] = self.get_neighbor_dic_list(data['adj_list'], data['N_nodes_max'])

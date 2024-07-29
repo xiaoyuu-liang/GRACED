@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torchsummary import summary
 
-from src.model.classifier.datasets.graph_data_reader import DataReader, GraphData
+from src.datasets.graph_data_reader import DataReader, GraphData
 from src.model.classifier import GCN, GAT, GraphSAGE, APPNP, GIN, GraphUNet, ARMA, SGCNN, GraphResNet, GraphDenseNet, NodeRandomWalkNet, ExpandedSpatialGraphEmbeddingNet
 from src.model.classifier.utils_classifier import create_directory, save_result_csv
 

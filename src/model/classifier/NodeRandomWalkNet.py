@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .readouts.basic_readout import readout_function
-from .datasets.graph_node_random_walk import get_node_random_walk
+from src.datasets.graph_node_random_walk import get_node_random_walk
 
 class NodeRandomWalkNet(nn.Module):
     def __init__(self, n_feat, n_class, n_layer, agg_hidden, fc_hidden, dropout, readout, device,
