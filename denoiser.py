@@ -131,6 +131,17 @@ def main(cfg: DictConfig):
                     train_dataloaders=datamodule.train_dataloader(),
                     val_dataloaders=datamodule.val_dataloader(), 
                     ckpt_path=cfg.general.resume)
+        trainer.test(model,
+                     dataloaders=datamodule.test_dataloader())
+    elif cfg.general.evaluate_all_checkpoints: # evaluate all checkpoints
+        directory = pathlib.Path(cfg.general.test_only).parents[0]
+        print("Directory:", directory)
+        files_list = os.listdir(directory)
+        for file in files_list:
+            if '.ckpt' in file:
+                ckpt_path = os.path.join(directory, file)
+                print("Loading checkpoint", ckpt_path)
+                trainer.test(model, datamodule=datamodule, ckpt_path=ckpt_path)
 
 
 if __name__ == '__main__':

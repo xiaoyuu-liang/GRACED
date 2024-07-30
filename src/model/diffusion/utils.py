@@ -121,7 +121,7 @@ class PlaceHolder:
 
 def setup_wandb(cfg):
     config_dict = omegaconf.OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
-    kwargs = {'name': cfg.general.name, 'project': f'graph_jiont_diffuser_{cfg.dataset.name}', 'config': config_dict,
+    kwargs = {'name': cfg.general.name, 'project': f'GRACED_{cfg.dataset.name}', 'config': config_dict,
               'settings': wandb.Settings(_disable_stats=True), 'reinit': True, 'mode': cfg.general.wandb}
     wandb.init(**kwargs)
     wandb.save('*.txt')
