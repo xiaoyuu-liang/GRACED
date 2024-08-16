@@ -1,0 +1,11 @@
+{
+    "n_samples": 1,
+    "pf_plus_adj": 0.0,
+    "pf_plus_att": 0.01,
+    "pf_minus_adj": 0.0,
+    "pf_minus_att": 0.6,
+    "mean_softmax": false
+}{
+    "clean_acc": 1.0,
+    "majority_acc": 1.0
+}

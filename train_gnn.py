@@ -465,6 +465,7 @@ for dataset_name in args.dataset_list:
           
                 torch.save(model, './checkpoint_classifier/save_model/' + model_name + '/' + file_name)
                 print('Complete to save model')
+            break 
     
         print(acc_folds)
         print('{}-fold cross validation avg acc (+- std): {} ({})'.format(args.n_folds, statistics.mean(acc_folds), statistics.stdev(acc_folds)))

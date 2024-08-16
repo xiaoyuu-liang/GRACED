@@ -126,7 +126,7 @@ class AttributedGraphDataset(InMemoryDataset):
         train_data = [data_list[i] for i in train_indices]
         val_data = [data_list[i] for i in val_indices]
         test_data = [data_list[i] for i in test_indices]
-
+        
         torch.save(train_data, self.raw_paths[0])
         torch.save(val_data, self.raw_paths[1])
         torch.save(test_data, self.raw_paths[2])
@@ -171,6 +171,14 @@ class AttributedDatasetInfos(AbstractDatasetInfos):
     def __init__(self, datamodule, dataset_config):
         self.datamodule = datamodule
         datareader = DataReader(datamodule.root_path)
+
+        datareader.data['splits'] = datareader.data['splits'][0]      # del other folds
+        train_len = len(datareader.data['splits']['train'])
+        val_len =  int(train_len * 0.1)
+        train_len = train_len - val_len
+        test_val = len(datareader.data['splits']['test'])
+        self.split_len = {'train': train_len, 'val': val_len, 'test': test_val}
+
         self.node_counts = self.datamodule.node_counts() # node count marginal distribution
 
         node_attr = torch.Tensor(datareader.data['feature_margin'])

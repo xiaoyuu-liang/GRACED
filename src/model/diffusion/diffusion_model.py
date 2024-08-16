@@ -10,15 +10,19 @@ import wandb
 import os
 from tqdm import tqdm
 
+from torch_geometric.utils import to_dense_adj
+
 from src.model.diffusion.train_metrics import TrainLossDiscrete, NLL, SumExceptBatchKL, SumExceptBatchMetric
 from src.model.diffusion.noise_schedule import PredefinedNoiseScheduleDiscrete, MarginalUniformTransition
 from src.model.diffusion.transformer_model import GraphTransformer
 from src.model.diffusion.mpnn import MPNN
 from src.model.diffusion import utils
 from src.model.diffusion import diffusion_utils
+from src.model.randomizer.cert import certify
+from src.model import general_utils
 
 
-class GraphJointDiffuser(pl.LightningModule):
+class GraphDiffusionModel(pl.LightningModule):
     def __init__(self, cfg, dataset_infos, extra_features, train_metrics):
         super().__init__()
         
@@ -464,6 +468,106 @@ class GraphJointDiffuser(pl.LightningModule):
 
         return utils.PlaceHolder(X=probX0, E=probE0, y=proby0)
     
+    @torch.no_grad()
+    def denoised_smoothing(self, dataloader, classifier=None, hparams=None):
+        """
+        hparams: dict
+        """
+        test_len = self.dataset_info.split_len['test']
+        num_classes = len(self.dataset_info.node_types)
+        batch_size = dataloader.batch_size
+        device = classifier.device
+        
+        pre_votes_list = []
+        votes_list = []
+        targets_list = []
+        
+        for data in tqdm(dataloader, desc="Denoised Smoothing"):
+            target = torch.tensor(data.label).to(device)
+            pad = -torch.ones((batch_size - len(data.label)), dtype=torch.float).to(device)
+            target = torch.cat((target, pad), dim=0)
+
+            pre_votes = torch.zeros((batch_size, num_classes), dtype=torch.long, device=device)
+            votes = torch.zeros((batch_size, num_classes), dtype=torch.long, device=device)
+
+            pre_votes_list.append(self.denoise_pred(data, hparams['attr_noise_scale'], hparams['adj_noise_scale'], hparams['pre_n_samples'], pre_votes, classifier))
+            votes_list.append(self.denoise_pred(data, hparams['attr_noise_scale'], hparams['adj_noise_scale'], hparams['n_samples'], votes, classifier))
+            targets_list.append(target)        
+        
+        pre_votes = torch.cat(pre_votes_list, dim=0)[:test_len, :]
+        votes = torch.cat(votes_list, dim=0)[:test_len, :]
+        targets = torch.cat(targets_list, dim=0)[:test_len]
+
+        pre_labels = pre_votes.argmax(-1)    
+        labels = votes.argmax(-1)
+
+        correct = (pre_labels == targets).cpu().numpy()
+        clean_acc = correct.mean()
+        print(f'Clean accuracy: {clean_acc}')
+        majority_correct = (labels == targets).cpu().numpy()
+        majority_acc = majority_correct.mean()
+        print(f'Majority vote accuracy: {majority_acc}')
+        
+        certificate = {}
+        if hparams['certify']:
+            certificate = certify(majority_correct, pre_votes.cpu(), votes.cpu(), hparams)
+        certificate['clean_acc'] = clean_acc
+        certificate['majority_acc'] = majority_acc
+        certificate['correct'] = correct.tolist()
+
+        return certificate
+    
+    def denoise_pred(self, data, t_X, t_E, n_samples, votes, classifier):
+        """
+        Return: denoised prediction votes for data with classifier.
+        """
+
+        for _ in range(n_samples):
+            denoised_data = self.denoise_Z(data, t_X, t_E)
+            # print(f'denoised_data: {denoised_data[0].shape, denoised_data[1].shape, len(denoised_data[5])}')
+            pred = classifier(denoised_data)
+
+            row_indices = torch.arange(pred.size(0))
+            votes[row_indices, pred.argmax(-1)] += 1
+            # print(f'votes: {votes, pred.argmax(-1)}')
+        return votes
+        
+    @torch.no_grad()
+    def denoise_Z(self, data, t_X, t_E):
+        """
+        Receive data and denoise data of noise scale t.
+        """
+        data = data.to(self.device)
+        dense_data, node_mask = utils.to_dense(data.x, data.edge_index, data.edge_attr, data.batch)
+        dense_data = dense_data.mask(node_mask)
+        noisy_data = self.apply_noise(dense_data.X, dense_data.E, data.y, node_mask, t_X, t_E)
+        extra_data = self.compute_extra_data(noisy_data)
+        pred = self.forward(noisy_data, extra_data, node_mask)
+        # pred = utils.PlaceHolder(X=torch.tensor(noisy_data['X_t'].clone().detach(), dtype=float), 
+        #                          E=torch.tensor(noisy_data['E_t'].clone().detach(), dtype=float), 
+        #                          y=torch.tensor(noisy_data['y_t'].clone().detach(), dtype=float))
+        # pred = pred.mask(node_mask)
+            
+        unnormalized_prob_X = F.softmax(pred.X, dim=-1)
+        unnormalized_prob_X[torch.sum(unnormalized_prob_X, dim=-1) == 0] = 1e-5
+        prob_X = unnormalized_prob_X / torch.sum(unnormalized_prob_X, dim=-1, keepdim=True)  # bs, n, dx, dx_c
+        unnormalized_prob_E = F.softmax(pred.E, dim=-1)
+        unnormalized_prob_E[torch.sum(unnormalized_prob_E, dim=-1) == 0] = 1e-5
+        prob_E = unnormalized_prob_E / torch.sum(unnormalized_prob_E, dim=-1, keepdim=True)  # bs, n, dx, dx_c
+
+        denoised_data = diffusion_utils.sample_discrete_features(probX=prob_X.cpu(), probE=prob_E.cpu(), node_mask=node_mask.cpu())
+        x_list = []
+        adj_list = []
+        batch_size = denoised_data.X.size(0)
+        for graph in range(batch_size):
+            mask = node_mask[graph].cpu()
+            x_list.append(denoised_data.X[graph][mask].float().cpu())
+            adj_list.append(denoised_data.E[graph][mask][:, mask].float().cpu())
+
+        data = general_utils.get_data(x_list, adj_list, data.label, node_mask)
+
+        return data
+    
     def forward(self, noisy_data, extra_data, node_mask):
         X = torch.cat((noisy_data['X_t'], extra_data.X), dim=3).float()
         E = torch.cat((noisy_data['E_t'], extra_data.E), dim=3).float()
@@ -485,3 +589,30 @@ class GraphJointDiffuser(pl.LightningModule):
         extra_y = torch.cat((extra_y, t_X, t_E), dim=1)
 
         return utils.PlaceHolder(X=extra_X, E=extra_E, y=extra_y)
+    
+    def compute_noise(self, t_X, t_E):
+        """ Compute noise for a given time step t. """
+
+        t_X_int = torch.full((1, 1), t_X, device=self.device).float()
+        t_X_float = t_X_int / self.T
+        print(f'attribute noise scale: {t_X}/{self.T}')
+
+        t_E_int = torch.full((1, 1), t_E, device=self.device).float()
+        t_E_float = t_E_int / self.T
+        print(f'adjacent noise scale: {t_E}/{self.T}')
+
+        alpha_t_X_bar = self.noise_schedule.get_alpha_bar(t_normalized=t_X_float)      # (1, 1)
+        alpha_t_E_bar = self.noise_schedule.get_alpha_bar(t_normalized=t_E_float)      # (1, 1)
+
+        Qtb_X = self.transition_model.get_Qt_bar(alpha_t_X_bar, device=self.device)  # (1, dx, dx_c, dx_c) (1, de, de)
+        Qtb_E = self.transition_model.get_Qt_bar(alpha_t_E_bar, device=self.device)  # (1, dx, dx_c, dx_c) (1, de, de)
+        assert (abs(Qtb_X.X.sum(dim=3) - 1.) < 1e-4).all(), Qtb_X.X.sum(dim=3) - 1
+        assert (abs(Qtb_E.E.sum(dim=2) - 1.) < 1e-4).all()
+
+        X_flip_prob = Qtb_X.X.squeeze(0).mean(dim=0)
+        E_flip_prob = Qtb_E.E.squeeze(0)
+        print(f'X_p_plus: {X_flip_prob[0][1]:.4f}, X_p_minus: {X_flip_prob[1][0]:.4f}')
+        print(f'E_p_plus: {E_flip_prob[0][1]:.4f}, E_p_minus: {E_flip_prob[1][0]:.4f}')
+        return {'p': 1, 'smoothing_distribution': "sparse", 'append_indicator': False,
+                'p_plus': X_flip_prob[0][1].item(), 'p_minus': X_flip_prob[1][0].item(),
+                'p_plus_adj': E_flip_prob[0][1].item(), 'p_minus_adj': E_flip_prob[1][0].item()}

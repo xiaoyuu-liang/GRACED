@@ -14,11 +14,13 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.utilities.warnings import PossibleUserWarning
 warnings.filterwarnings("ignore", category=PossibleUserWarning)
 
+from src.model.classifier import GCN, GIN
 from src.model.diffusion import utils
 from src.model.diffusion.attributed_dataset import AttributedGraphDataModule, AttributedDatasetInfos
 from src.model.diffusion.extra_features import DummyExtraFeatures
-from src.model.diffusion.diffusion_model import GraphJointDiffuser
+from src.model.diffusion.diffusion_model import GraphDiffusionModel
 from src.model.diffusion.train_metrics import TrainAbstractMetricsDiscrete
+from src.model import general_utils
 
 
 def get_resume(cfg, model_kwargs):
@@ -29,7 +31,7 @@ def get_resume(cfg, model_kwargs):
 
     resume_path = os.path.join(root_dir, cfg.general.test_only)
 
-    model = GraphJointDiffuser.load_from_checkpoint(resume_path, **model_kwargs)
+    model = GraphDiffusionModel.load_from_checkpoint(resume_path, **model_kwargs)
     new_cfg = model.cfg
 
     for category in cfg:
@@ -53,7 +55,7 @@ def get_resume_adaptive(cfg, model_kwargs):
 
     resume_path = os.path.join(root_dir, cfg.general.resume)
 
-    model = GraphJointDiffuser.load_from_checkpoint(resume_path, **model_kwargs)
+    model = GraphDiffusionModel.load_from_checkpoint(resume_path, **model_kwargs)
     new_cfg = model.cfg
 
     for category in cfg:
@@ -112,7 +114,7 @@ def main(cfg: DictConfig):
     device = 'cuda:' + cfg.general.gpus if isinstance(cfg.general.gpus, str) else 'cuda:0' if cfg.general.gpus > 0 else 'cpu'
     print(f"Using device {device}")
 
-    model = GraphJointDiffuser(cfg, **model_kwargs)
+    model = GraphDiffusionModel(cfg, **model_kwargs)
     trainer = Trainer(gradient_clip_val=cfg.train.clip_grad,
                       strategy="auto",  # Needed to load old checkpoints
                       accelerator='gpu' if use_gpu else 'cpu',
@@ -142,6 +144,21 @@ def main(cfg: DictConfig):
                 ckpt_path = os.path.join(directory, file)
                 print("Loading checkpoint", ckpt_path)
                 trainer.test(model, datamodule=datamodule, ckpt_path=ckpt_path)
+    else: # predict
+        print('denoise with GRAD')
+        _, model = get_resume(cfg, model_kwargs)
+        
+        classifier = torch.load(denoiser_config.classifier_path)
+
+        classifier.eval()
+        classifier.to(device)
+        hparams = OmegaConf.to_container(denoiser_config)
+        smoothing_config = model.compute_noise(t_X=denoiser_config.attr_noise_scale, t_E=denoiser_config.adj_noise_scale)   
+        hparams['smoothing_config'] = smoothing_config
+        dict_to_save = model.denoised_smoothing(dataloader=datamodule.test_dataloader(),
+                                                classifier=classifier,
+                                                hparams=hparams)
+        general_utils.save_cetrificate(dict_to_save, dataset_config, hparams, f"checkpoints/{dataset_config['name']}/{cfg.general.name}")
 
 
 if __name__ == '__main__':
