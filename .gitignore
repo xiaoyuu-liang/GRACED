@@ -21,6 +21,7 @@ Thumbs.db
 
 # data files
 /data/*/
+/figs/
 
 
 # running files
@@ -35,6 +36,7 @@ Thumbs.db
 # Log files
 *.log
 *.out
+*.txt
 
 # Other
 *.bak

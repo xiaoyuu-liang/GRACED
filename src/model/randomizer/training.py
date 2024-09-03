@@ -9,6 +9,7 @@ from src.model.randomizer.prediction import predict_smooth_pytorch
 from src.model import general_utils
 import time
 import logging
+import wandb
 
 
 def get_time():
@@ -25,17 +26,16 @@ def smooth_logits_pytorch(data, model, sample_config, sample_fn):
 
         x_list = []
         adj_list = []
-        
-        x = data_perturbed.x
-        x_list.append(x.cpu())
+        for i in range(data_perturbed.num_graphs):
+            # Extract node features for the i-th graph
+            x_i = data_perturbed.x[data_perturbed.batch == i]
+            x_list.append(x_i.cpu())
 
-        adj = utils.to_dense_adj(data_perturbed.edge_index, max_num_nodes=x.size(0))[0]
-        adj_list.append(adj.cpu())
-
+        adjs = utils.to_dense_adj(data_perturbed.edge_index, batch=data.batch)
+        adj_list = [adjs[i].cpu().numpy() for i in range(adjs.size(0))]
         p_data = general_utils.get_data(x_list, adj_list, [0], data.batch)
-        
         logits.append(model(p_data))
-    return torch.stack(logits).mean(0).view(1, 2)
+    return torch.stack(logits).mean(0)
 
 
 def run_epoch_pytorch(
@@ -103,6 +103,10 @@ def train_pytorch(
     model.train()
     optimizer = torch.optim.Adam(
         model.parameters(), lr=lr, weight_decay=weight_decay)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer, step_size=50, gamma=0.5)
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"IN TRAIN Total number of trainable parameters: {trainable_params}")
 
     if sample_config is not None:
         assert sample_fn is not None
@@ -119,8 +123,9 @@ def train_pytorch(
         train_loss, train_acc, train_time = run_epoch_pytorch(
             model_partial, optimizer, dataloaders['train'], n_samples['train'],
             train=True, data_tuple=data_tuple)
-
-
+        # wandb.log({f"Epoch {epoch + 1: >3}/{max_epochs}, "
+        #              f"train loss: {train_loss:.2e}, "
+        #              f"accuracy: {train_acc * 100:.2f}% ({train_time:.2f}s)"})
         logging.info(f"Epoch {epoch + 1: >3}/{max_epochs}, "
                      f"train loss: {train_loss:.2e}, "
                      f"accuracy: {train_acc * 100:.2f}% ({train_time:.2f}s)")

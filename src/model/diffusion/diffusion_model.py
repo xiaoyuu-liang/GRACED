@@ -497,7 +497,6 @@ class GraphDiffusionModel(pl.LightningModule):
         pre_votes = torch.cat(pre_votes_list, dim=0)[:test_len, :]
         votes = torch.cat(votes_list, dim=0)[:test_len, :]
         targets = torch.cat(targets_list, dim=0)[:test_len]
-
         pre_labels = pre_votes.argmax(-1)    
         labels = votes.argmax(-1)
 

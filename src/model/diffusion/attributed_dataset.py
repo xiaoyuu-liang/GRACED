@@ -38,7 +38,7 @@ class AbstractDataModule(LightningDataset):
     # def test_dataloader(self) -> DataLoader:
     #     return DataLoader(self.test_dataset, batch_size=self.cfg.train.batch_size, num_workers=self.cfg.train.num_workers)
 
-    def node_counts(self, max_nodes_possible=200):
+    def node_counts(self, max_nodes_possible=1000):
         all_counts = torch.zeros(max_nodes_possible)
         for loader in [self.train_dataloader(), self.val_dataloader()]:
             for data in loader:

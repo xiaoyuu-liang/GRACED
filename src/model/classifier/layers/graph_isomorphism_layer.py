@@ -59,6 +59,11 @@ class GraphIsomorphismLayer(nn.Module):
         self.device = device
 
         self.mlp = MLP(num_mlp_layers, in_features, out_features, out_features).to(device)
+        # if self.learn_eps:
+        #     # Each layer has its own eps parameter
+        #     self.eps = nn.Parameter(torch.zeros(self.eps.shape[0])).to(device)
+        # else:
+        #     self.register_buffer('eps', torch.zeros(self.eps.shape[0]).to(device))
 
         self.batch_norm = nn.BatchNorm1d(out_features).to(device)
 
@@ -68,7 +73,7 @@ class GraphIsomorphismLayer(nn.Module):
         dummy = torch.min(h, dim = 0)[0]
         h_with_dummy = torch.cat([h, dummy.reshape((1, -1)).to(self.device)])
         pooled_rep = torch.max(h_with_dummy[padded_neighbor_list], dim = 1)[0]
-        return pooled_re
+        return pooled_rep
 
     # Pooling neighboring nodes and center nodes separately by epsilon reweighting   
     def next_layer_eps(self, h, padded_neighbor_list = None, Adj_block = None):

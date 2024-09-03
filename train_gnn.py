@@ -27,12 +27,12 @@ parser.add_argument('--model_list', nargs='+', required=False, default=['GIN'],
                     'available model: ' + str(model_list)
                      + '\nable to choose multiple models \n'+
                      'ALL: choose all available model')
-parser.add_argument('--dataset_list', nargs='+', required=False, default=['MUTAG'],
+parser.add_argument('--dataset_list', nargs='+', required=False, default=['PROTEINS'],
                     help='target graph classification dataset list \n'+
                     'available dataset: ' + str(dataset_list)
                      + '\nable to choose multiple datasets \n'+
                      'ALL: choose all available dataset')
-parser.add_argument('--readout_list', nargs='+', required=False, default=['avg'],
+parser.add_argument('--readout_list', nargs='+', required=False, default=['sum'],
                     help='target readout method list \n'+
                     'available readout: ' + str(readout_list)
                      + '\nable to choose multiple readout methods \n'+
@@ -66,7 +66,7 @@ parser.add_argument('--cuda', default='TRUE',
                     'TRUE/FALSE')
 parser.add_argument('--batch_size', type=int, default=128,
                     help='batch size of data')                  
-parser.add_argument('--epochs', type=int, default=50,
+parser.add_argument('--epochs', type=int, default=200,
                     help='train epochs')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='learning rate of optimizer')
@@ -468,20 +468,20 @@ for dataset_name in args.dataset_list:
             break 
     
         print(acc_folds)
-        print('{}-fold cross validation avg acc (+- std): {} ({})'.format(args.n_folds, statistics.mean(acc_folds), statistics.stdev(acc_folds)))
+        # print('{}-fold cross validation avg acc (+- std): {} ({})'.format(args.n_folds, statistics.mean(acc_folds), statistics.stdev(acc_folds)))
 
         # Save 10-cross validation result as csv format
-        create_directory('./checkpoint_classifier/test_result')
-        create_directory('./checkpoint_classifier/test_result/' + model_name)
+        # create_directory('./checkpoint_classifier/test_result')
+        # create_directory('./checkpoint_classifier/test_result/' + model_name)
         
-        result_list = []
-        result_list.append(dataset_name)
-        result_list.append(readout_name)
-        for acc_fold in acc_folds:
-          result_list.append(str(acc_fold))
-        result_list.append(statistics.mean(acc_folds))
-        result_list.append(statistics.stdev(acc_folds))
-        result_list.append(statistics.mean(time_folds))
+        # result_list = []
+        # result_list.append(dataset_name)
+        # result_list.append(readout_name)
+        # for acc_fold in acc_folds:
+        #   result_list.append(str(acc_fold))
+        # result_list.append(statistics.mean(acc_folds))
+        # result_list.append(statistics.stdev(acc_folds))
+        # result_list.append(statistics.mean(time_folds))
         
         if model_name == 'ExpandedSpatialGraphEmbeddingNet':
             file_name = model_name + '_' + args.node_random_walk_model_name + '_' + str(args.n_spatial_graph_embedding_model_layer) + '_' + str(args.n_node_random_walk_model_layer) + '_' + str(args.walk_length) + '_' + str(args.num_walk) + '_' + str(args.p) + '_' + str(args.q) + '_h' + str(args.agg_hidden) + '_' + '10_cross_validation.csv'
@@ -504,10 +504,10 @@ for dataset_name in args.dataset_list:
             elif args.n_graph_subsampling > 0:
               file_name = model_name + '_' + str(args.n_agg_layer) + '_h' + str(args.agg_hidden) + '_' + 'edge_graph_subsampling' + '_' + '10_cross_validation.csv'
         
-        if i == 0:
-          save_result_csv('./checkpoint_classifier/test_result/' + model_name + '/' + file_name, result_list, True)
-        else:
-          save_result_csv('./checkpoint_classifier/test_result/' + model_name + '/' + file_name, result_list, False)
+        # if i == 0:
+        #   save_result_csv('./checkpoint_classifier/test_result/' + model_name + '/' + file_name, result_list, True)
+        # else:
+        #   save_result_csv('./checkpoint_classifier/test_result/' + model_name + '/' + file_name, result_list, False)
         
         print('-'*25)
     print('-'*50)

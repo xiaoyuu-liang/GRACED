@@ -29,14 +29,17 @@ def predict_smooth_pytorch(model, dataloader, n_data, n_classes,
             x_list = []
             adj_list = []
             
-            x = data_perturbed.x
-            x_list.append(x.cpu())
+            for i in range(data_perturbed.num_graphs):
+                # Extract node features for the i-th graph
+                x_i = data_perturbed.x[data_perturbed.batch == i]
+                x_list.append(x_i.cpu())
 
-            adj = utils.to_dense_adj(data_perturbed.edge_index, max_num_nodes=x.size(0))[0]
-            adj_list.append(adj.cpu())
-
+            adjs = utils.to_dense_adj(data_perturbed.edge_index, batch=data.batch)
+            adj_list = [adjs[i].cpu().numpy() for i in range(adjs.size(0))]
             p_data = general_utils.get_data(x_list, adj_list, [0], data.batch)
-            preds = model(p_data).argmax(-1)
+
+            preds = model(p_data).argmax(1)
+            # print(preds)
             preds_onehot = F.one_hot(preds, n_classes)
             votes[batch_idx:batch_idx + yb.shape[0]] += preds_onehot
         ncorr += (votes[batch_idx:batch_idx + yb.shape[0]].argmax(1) == yb).sum().item()
