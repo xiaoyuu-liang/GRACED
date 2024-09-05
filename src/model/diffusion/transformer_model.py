@@ -56,6 +56,8 @@ class GraphTransformer(nn.Module):
     def forward(self, X, E, y, node_mask):
         bs, n, bx, bx_c = X.shape
         X = X.view(bs, n, -1)               # (bs, n, bx*bx_c)
+        t_X = y[:,0].unsqueeze(1)
+        t_E = y[:,1].unsqueeze(1)
 
         diag_mask = torch.eye(n)
         diag_mask = ~diag_mask.type_as(E).bool()

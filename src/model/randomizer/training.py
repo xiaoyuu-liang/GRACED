@@ -106,7 +106,6 @@ def train_pytorch(
     lr_scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=50, gamma=0.5)
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"IN TRAIN Total number of trainable parameters: {trainable_params}")
 
     if sample_config is not None:
         assert sample_fn is not None

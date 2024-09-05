@@ -1,5 +1,6 @@
 import os
 import sys
+import numpy as np
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import torch
@@ -53,19 +54,25 @@ class GraphSAGE(nn.Module):
         
         max_value = torch.tensor(0).to(self.device)
         for i, edge_matrix in enumerate(edge_matrix_list):
-            for a in range(edge_matrix_count_list[i]):
-                start_edge_matrix_list.append(max_value + edge_matrix[a][0])
-                end_edge_matrix_list.append(max_value + edge_matrix[a][1])
-            if max_value < max_value + edge_matrix[edge_matrix_count_list[i] - 1][0]:
-                max_value = max_value + edge_matrix[edge_matrix_count_list[i] - 1][0]
+            if edge_matrix_count_list[i] > 0:
+                for a in range(edge_matrix_count_list[i]):
+                    start_edge_matrix_list.append(max_value + edge_matrix[a][0])
+                    end_edge_matrix_list.append(max_value + edge_matrix[a][1])
+                if max_value < max_value + edge_matrix[edge_matrix_count_list[i] - 1][0]:
+                    max_value = max_value + edge_matrix[edge_matrix_count_list[i] - 1][0]
         total_edge_matrix_list.append(start_edge_matrix_list)
         total_edge_matrix_list.append(end_edge_matrix_list)
-        
+            
         for i in range(len(x_list)):
             for a in range(node_count_list[i]):
                 batch_list.append(i)
                 total_x_list.append(x_list[i][a].cpu().numpy())
         
+        # total_edge_matrix = torch.from_numpy(np.array([t.cpu().numpy() for t in total_edge_matrix_list])).to(self.device)
+        # batch = torch.from_numpy(np.array([t.cpu().numpy() for t in batch_list])).to(self.device)
+        # total_x = torch.from_numpy(np.array([t.cpu().numpy() for t in total_x_list])).to(self.device)
+
+        # return total_edge_matrix, batch, total_x
         return torch.tensor(total_edge_matrix_list).long().to(self.device), torch.tensor(batch_list).float().to(self.device), torch.tensor(total_x_list).float().to(self.device)
               
     def forward(self, data):

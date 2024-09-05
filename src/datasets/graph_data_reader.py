@@ -165,7 +165,10 @@ class DataReader():
         data['N_nodes_max'] = np.max(shapes)  # Max number of nodes
         data['features_dim'] = features_dim
         data['n_classes'] = n_classes
-        data['feature_margin'] = [np.count_nonzero(features_all == u) / len(features_all) for u in np.unique(features_all)]
+        feature_margin = np.zeros(features_dim)
+        for u in np.unique(features_all):
+            feature_margin[u-1] = np.count_nonzero(features_all == u) / len(features_all)
+        data['feature_margin'] = feature_margin
         data['label_margin'] = [np.sum(labels == lbl) / len(data['adj_list']) for lbl in classes]
         data['edge_margin'] = [np.sum(data['edge_matrix_count_list']) / np.sum([c**2 - c for c in data['node_count_list']])]
 

@@ -6,11 +6,11 @@ diffusion_noise_schedule: 'cosine'              # 'cosine', 'polynomial_2'
 
 # MLP config for attr noise predictor
 n_mlp_layers: 2
-hidden_mlp_dims: {'X': 512, 'y': 128, 'label': 128}
-mlp_dropout: 0.1
+hidden_mlp_dims: {'X': 128, 'y': 128, 'label': 128}
+mlp_dropout: 0.2
 
 # GNN config for edge noise predictor
-n_gnn_layers: 2
+n_gnn_layers: 4
 hidden_gnn_dims: {'X': 512, 'E': 128, 'y': 128, 'label': 128}
 gnn_dropout: 0.1
 

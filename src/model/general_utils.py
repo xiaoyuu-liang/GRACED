@@ -61,6 +61,14 @@ def get_edge_matrix_list(adj_list):
                     
     return edge_matrix_list, max_edge_matrix
 
+def get_edge_matrix_count_list(edge_matrix_list):
+        edge_matrix_count_list = []
+        
+        for edge_matrix in edge_matrix_list:
+            edge_matrix_count_list.append(len(edge_matrix))
+                        
+        return edge_matrix_count_list
+
 
 def pad(mtx_list, desired_dim1, desired_dim2=None, value=0, mode='edge_matrix'):
     
@@ -88,4 +96,13 @@ def get_data(x_list, adj_list, label, node_mask):
     max_neighbor_list = get_max_neighbor(get_node_features_degree(adj_list))    
     data.append(max_neighbor_list)                                                      # max_neighbor_list
 
+    edge_matrix_list = get_edge_matrix_list(adj_list)[0]
+    data.append(edge_matrix_list)                                                      # edge_matrix_list
+
+    node_count_list = get_node_count_list(adj_list)
+    data.append(node_count_list)
+
+    edge_matrix_count_list = get_edge_matrix_count_list(edge_matrix_list)
+    data.append(edge_matrix_count_list)
+    
     return data

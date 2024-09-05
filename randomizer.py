@@ -18,8 +18,8 @@ def config():
     dataset = 'proteins'
     seed = 42
 
-    patience = 50
-    max_epochs = 1000
+    patience = 5
+    max_epochs = 100
     lr = 1e-3
     weight_decay = 1e-3
 
@@ -27,18 +27,18 @@ def config():
     n_hidden = 64
     p_dropout = 0.5
 
-    pf_plus_att = [0.0343]
-    pf_minus_att = [0.0685]
+    pf_plus_att = [0.2201]
+    pf_minus_att = [0.4402]
 
-    pf_plus_adj = [0.0042]
-    pf_minus_adj = [0.0986]
+    pf_plus_adj = [0.0269]
+    pf_minus_adj = [0.6335]
 
     n_samples_train = 1
     batch_size_train = 128
 
     n_samples_pre_eval = 10
     n_samples_eval = 1000
-    batch_size_eval = 10
+    batch_size_eval = 128
 
     mean_softmax = False
     conf_alpha = 0.01
@@ -56,19 +56,23 @@ def run(_config, dataset, seed,
         ):
     import numpy as np
     import torch
-    from src.model.classifier import GCN, GIN
+    import random
+    from src.model.classifier import GraphSAGE, GIN, GCN
     from src.model.randomizer.training import train_pytorch
     from src.model.randomizer.prediction import predict_smooth_pytorch
     from src.model.randomizer.cert import binary_certificate, joint_binary_certificate, minimize
     from src.model.randomizer.utils import (sample_batch_pyg)
     from src.model.general_utils import save_cetrificate
+    import torch_geometric.utils as utils
     from torch_geometric.datasets import TUDataset
     from torch_geometric.loader import DataLoader as PyGDataLoader
+    from torch_geometric.transforms import OneHotDegree
     print(_config)
 
     sample_config_dict = {}
     for i in range(len(pf_minus_adj)):
         for j in range(len(pf_minus_att)):
+        # j=i
             sample_config_dict[i*5+j] = {
                 'n_samples': n_samples_train,
                 'pf_plus_adj': pf_plus_adj[i],
@@ -100,6 +104,13 @@ def run(_config, dataset, seed,
         
         pyg_dataset = TUDataset(
             root=f'data/datacache/{dataset.lower()}', name=dataset.upper())
+        
+        if dataset.lower() == 'imdb-binary':
+            pyg_dataset = TUDataset(
+                root=f'data/datacache/{dataset.lower()}', name=dataset.upper(), transform=OneHotDegree(max_degree=135))
+        indices = torch.randperm(len(pyg_dataset))
+        pyg_dataset = pyg_dataset[indices]
+
         pyg_dataset.data.edge_attr = None
         # Caution: Degrees as features if pyg_dataset.x is None.
         n_graphs = {'train': int(0.8 * len(pyg_dataset)),
@@ -114,6 +125,7 @@ def run(_config, dataset, seed,
                                         batch_size_train, shuffle=False)
         dataloaders['test'] = PyGDataLoader(pyg_dataset[n_graphs['train'] + n_graphs['val']:],
                                             batch_size_train, shuffle=False)
+
         idx = {}
         idx['train'] = np.arange(n_graphs['train'])
         idx['val'] = np.arange(n_graphs['val'])
@@ -131,15 +143,24 @@ def run(_config, dataset, seed,
                         dropout=0,
                         readout='sum',
                         device=device).to(device)
+        if arch.lower() == 'graphsage':
+            model = GraphSAGE(n_feat=pyg_dataset.num_features,
+                              n_class=pyg_dataset.num_classes,
+                              n_layer=3,
+                              agg_hidden=64,
+                              fc_hidden=128,
+                              dropout=0,
+                              readout='sum',
+                              device=device).to(device)
         if arch.lower() == 'gcn':
-            model = GCN(n_feat=pyg_dataset.num_features,
-                        n_class=pyg_dataset.num_classes,
-                        n_layer=2,
-                        agg_hidden=64,
-                        fc_hidden=128,
-                        dropout=0,
-                        readout='avg',
-                        device=device).to(device)
+            model = GraphSAGE(n_feat=pyg_dataset.num_features,
+                              n_class=pyg_dataset.num_classes,
+                              n_layer=3,
+                              agg_hidden=64,
+                              fc_hidden=128,
+                              dropout=0,
+                              readout='sum',
+                              device=device).to(device)
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print(f"Total number of trainable parameters: {trainable_params}")
         optimizer = torch.optim.Adam(
@@ -163,6 +184,7 @@ def run(_config, dataset, seed,
                 sample_config=sample_config_eval)
         
         votes = votes_dict['test']
+        # print(votes)
         votes_max = votes_dict['test'].argmax(1)
         # print(votes)
         

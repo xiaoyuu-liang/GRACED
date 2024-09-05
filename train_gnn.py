@@ -27,7 +27,7 @@ parser.add_argument('--model_list', nargs='+', required=False, default=['GIN'],
                     'available model: ' + str(model_list)
                      + '\nable to choose multiple models \n'+
                      'ALL: choose all available model')
-parser.add_argument('--dataset_list', nargs='+', required=False, default=['PROTEINS'],
+parser.add_argument('--dataset_list', nargs='+', required=False, default=['IMDB-BINARY'],
                     help='target graph classification dataset list \n'+
                     'available dataset: ' + str(dataset_list)
                      + '\nable to choose multiple datasets \n'+
@@ -66,7 +66,7 @@ parser.add_argument('--cuda', default='TRUE',
                     'TRUE/FALSE')
 parser.add_argument('--batch_size', type=int, default=128,
                     help='batch size of data')                  
-parser.add_argument('--epochs', type=int, default=200,
+parser.add_argument('--epochs', type=int, default=50,
                     help='train epochs')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='learning rate of optimizer')
@@ -447,6 +447,7 @@ for dataset_name in args.dataset_list:
                 total_time_iter = train(loaders[0])
                 total_time += total_time_iter
                 acc = test(loaders[1])
+
             acc_folds.append(round(acc,2))
             time_folds.append(round(total_time/args.epochs,2))
             
@@ -465,7 +466,7 @@ for dataset_name in args.dataset_list:
           
                 torch.save(model, './checkpoint_classifier/save_model/' + model_name + '/' + file_name)
                 print('Complete to save model')
-            break 
+            # break 
     
         print(acc_folds)
         # print('{}-fold cross validation avg acc (+- std): {} ({})'.format(args.n_folds, statistics.mean(acc_folds), statistics.stdev(acc_folds)))
