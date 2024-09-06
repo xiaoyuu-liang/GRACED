@@ -152,17 +152,17 @@ def main(cfg: DictConfig):
         classifier.eval()
         classifier.to(device)
         for attr_noise in [300]:
-            # for adj_noise in [0, 100, 200, 300, 350]:
+            for adj_noise in [300]:
                 # if attr_noise == adj_noise:
                 #     continue
-            denoiser_config.attr_noise_scale = attr_noise
-            denoiser_config.adj_noise_scale = attr_noise
-            hparams = OmegaConf.to_container(denoiser_config)
-            smoothing_config = model.compute_noise(t_X=denoiser_config.attr_noise_scale, t_E=denoiser_config.adj_noise_scale)   
-            hparams['smoothing_config'] = smoothing_config
-            dict_to_save = model.denoised_smoothing(dataloader=datamodule.test_dataloader(),
-                                                        classifier=classifier,
-                                                        hparams=hparams)
-            general_utils.save_cetrificate(dict_to_save, dataset_config, hparams, f"checkpoints/{dataset_config['name']}/{cfg.general.name}")
+                denoiser_config.attr_noise_scale = attr_noise
+                denoiser_config.adj_noise_scale = adj_noise
+                hparams = OmegaConf.to_container(denoiser_config)
+                smoothing_config = model.compute_noise(t_X=denoiser_config.attr_noise_scale, t_E=denoiser_config.adj_noise_scale)   
+                hparams['smoothing_config'] = smoothing_config
+                dict_to_save = model.denoised_smoothing(dataloader=datamodule.test_dataloader(),
+                                                            classifier=classifier,
+                                                            hparams=hparams)
+                general_utils.save_cetrificate(dict_to_save, dataset_config, hparams, f"checkpoints/{dataset_config['name']}/{cfg.general.name}")
 if __name__ == '__main__':
     main()

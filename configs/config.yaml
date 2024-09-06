@@ -3,7 +3,7 @@ defaults:
     - general : general_default
     - model : mpnn
     - train : train_default
-    - dataset : proteins
+    - dataset : mutag
     - denoiser : denoiser_default
 
 hydra:

@@ -15,10 +15,10 @@ def config():
             db_collection, overwrite=overwrite))
 
     # default params
-    dataset = 'proteins'
+    dataset = 'imdb-binary'
     seed = 42
 
-    patience = 5
+    patience = 10
     max_epochs = 100
     lr = 1e-3
     weight_decay = 1e-3
@@ -27,18 +27,18 @@ def config():
     n_hidden = 64
     p_dropout = 0.5
 
-    pf_plus_att = [0.2201]
-    pf_minus_att = [0.4402]
+    pf_plus_att = [0.0049]
+    pf_minus_att = [0.6555]
 
-    pf_plus_adj = [0.0269]
-    pf_minus_adj = [0.6335]
+    pf_plus_adj = [0.3260]
+    pf_minus_adj = [0.4716]
 
     n_samples_train = 1
-    batch_size_train = 128
+    batch_size_train = 1024
 
     n_samples_pre_eval = 10
     n_samples_eval = 1000
-    batch_size_eval = 128
+    batch_size_eval = 1024
 
     mean_softmax = False
     conf_alpha = 0.01
@@ -146,16 +146,7 @@ def run(_config, dataset, seed,
         if arch.lower() == 'graphsage':
             model = GraphSAGE(n_feat=pyg_dataset.num_features,
                               n_class=pyg_dataset.num_classes,
-                              n_layer=3,
-                              agg_hidden=64,
-                              fc_hidden=128,
-                              dropout=0,
-                              readout='sum',
-                              device=device).to(device)
-        if arch.lower() == 'gcn':
-            model = GraphSAGE(n_feat=pyg_dataset.num_features,
-                              n_class=pyg_dataset.num_classes,
-                              n_layer=3,
+                              n_layer=2,
                               agg_hidden=64,
                               fc_hidden=128,
                               dropout=0,
@@ -186,19 +177,18 @@ def run(_config, dataset, seed,
         votes = votes_dict['test']
         # print(votes)
         votes_max = votes_dict['test'].argmax(1)
-        # print(votes)
         
-        pre_votes_dict = {}
-        acc_clean = {}
-        for split_name in ['test']:
-            pre_votes_dict[split_name], acc_clean[split_name] = predict_smooth_pytorch(
-                model, dataloaders[split_name], n_graphs[split_name],
-                n_classes=pyg_dataset.num_classes,
-                data_tuple=False, sample_fn=sample_batch_pyg,
-                sample_config=sample_config_pre_eval)
+        # pre_votes_dict = {}
+        # acc_clean = {}
+        # for split_name in ['test']:
+        #     pre_votes_dict[split_name], acc_clean[split_name] = predict_smooth_pytorch(
+        #         model, dataloaders[split_name], n_graphs[split_name],
+        #         n_classes=pyg_dataset.num_classes,
+        #         data_tuple=False, sample_fn=sample_batch_pyg,
+        #         sample_config=sample_config_pre_eval)
         
-        pre_votes = pre_votes_dict['test']
-        pre_votes_max = votes_dict['test'].argmax(1)
+        # pre_votes = pre_votes_dict['test']
+        # pre_votes_max = votes_dict['test'].argmax(1)
 
         correct = votes_max == np.array(pyg_dataset.data.y[idx['test']])
 
@@ -246,7 +236,7 @@ def run(_config, dataset, seed,
         #     }
         # }
         results = {
-            'clean_acc': acc_clean['test'],
+            # 'clean_acc': acc_clean['test'],
             'majority_acc': acc_majority['test']
         }
         
@@ -264,5 +254,5 @@ def run(_config, dataset, seed,
         import json
         with open(f'{dataset}_res.txt', 'a') as f:
             json.dump(sample_config, f, indent=4)
-            json.dump({k: results[k] for k in ['clean_acc', 'majority_acc']}, f, indent=4)
-    return {k: results[k] for k in ['clean_acc', 'majority_acc']}
+            json.dump({k: results[k] for k in ['majority_acc']}, f, indent=4)
+    return {k: results[k] for k in ['majority_acc']}

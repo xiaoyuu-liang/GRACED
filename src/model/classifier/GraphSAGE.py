@@ -67,10 +67,10 @@ class GraphSAGE(nn.Module):
             for a in range(node_count_list[i]):
                 batch_list.append(i)
                 total_x_list.append(x_list[i][a].cpu().numpy())
-        
-        # total_edge_matrix = torch.from_numpy(np.array([t.cpu().numpy() for t in total_edge_matrix_list])).to(self.device)
-        # batch = torch.from_numpy(np.array([t.cpu().numpy() for t in batch_list])).to(self.device)
-        # total_x = torch.from_numpy(np.array([t.cpu().numpy() for t in total_x_list])).to(self.device)
+
+        # total_edge_matrix = torch.from_numpy(np.array([np.array(t.cpu()) for t in total_edge_matrix_list])).to(self.device)
+        # batch  = torch.from_numpy(np.array([np.array(t.cpu()) for t in batch_list])).to(self.device)
+        # total_x = torch.from_numpy(np.array([np.array(t.cpu()) for t in total_x_list])).to(self.device)
 
         # return total_edge_matrix, batch, total_x
         return torch.tensor(total_edge_matrix_list).long().to(self.device), torch.tensor(batch_list).float().to(self.device), torch.tensor(total_x_list).float().to(self.device)

@@ -33,7 +33,7 @@ def parse_arguments():
 
 def main():
     path, joint, singular = parse_arguments()
-    
+    print(torch.load(path).keys())
     cert = torch.load(path)['binary']['cert_acc']
 
     np.set_printoptions(formatter={'float': '{: 0.2f}'.format})

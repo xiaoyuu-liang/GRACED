@@ -16,7 +16,7 @@ from src.model.classifier import GCN, GAT, GraphSAGE, APPNP, GIN, GraphUNet, ARM
 from src.model.classifier.utils_classifier import create_directory, save_result_csv
 
 model_list = ['GCN', 'GAT', 'GraphSAGE', 'APPNP', 'GIN', 'GraphUNet', 'ARMA', 'SGCNN', 'GraphResNet', 'GraphDenseNet', 'NodeRandomWalkNet', 'ExpandedSpatialGraphEmbeddingNet']
-dataset_list = ['IMDB-BINARY', 'IMDB-MULTI', 'PROTEINS', 'ENZYMES', 'NCI1', 'MUTAG']
+dataset_list = ['IMDB-BINARY', 'IMDB-MULTI', 'PROTEINS', 'ENZYMES', 'NCI1', 'MUTAG', 'DD']
 readout_list = ['max', 'avg', 'sum']
 
 parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
@@ -66,7 +66,7 @@ parser.add_argument('--cuda', default='TRUE',
                     'TRUE/FALSE')
 parser.add_argument('--batch_size', type=int, default=128,
                     help='batch size of data')                  
-parser.add_argument('--epochs', type=int, default=50,
+parser.add_argument('--epochs', type=int, default=200,
                     help='train epochs')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='learning rate of optimizer')

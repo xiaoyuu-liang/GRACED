@@ -41,11 +41,11 @@ sparse_mutag_acc = [
 
 cider_imdb_acc = [
 # attr  0,   100,  200,  300,  350 
-    [0.70, 0.69, 0.66, 0.67, 0.65], # adj 0
-    [0.72, 0.70, 0.65, 0.66, 0.63], # adj 100
-    [0.70, 0.70, 0.70, 0.59, 0.59], # adj 200
-    [0.74, 0.67, 0.64, 0.60, 0.55], # adj 300
-    [0.69, 0.67, 0.67, 0.60, 0.52], # adj 350
+    [0.74, 0.71, 0.78, 0.67, 0.65], # adj 0
+    [0.76, 0.72, 0.69, 0.73, 0.64], # adj 100
+    [0.75, 0.75, 0.77, 0.75, 0.67], # adj 200
+    [0.75, 0.74, 0.70, 0.63, 0.55], # adj 300
+    [0.69, 0.67, 0.67, 0.66, 0.58], # adj 350
 ]
 # graphsage cider 300 300 0.75
 sparse_imdb_acc = [
@@ -134,19 +134,19 @@ def main():
     print(f'Average accuracy gap with {gap} for {dataset}: {np.mean(acc_gap):.6f}')
 
     # Define your custom colors
-    colors = ["#f1e1c9", "#ffffff", "#cdcfe1", "#9193b4", "#5c6592"]
-    n_bins = 100  # Increase this number for a smoother transition between colors
+    colors = ["#ffffff", "#cdcfe1", "#9193b4", "#5c6592"]
+    n_bins = 200  # Increase this number for a smoother transition between colors
     cmap_name = "MintCmap"
 
     # Create the colormap
     mint_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
 
     # Draw heatmap
-    plt.figure(figsize=(10, 8.5))
+    plt.figure(figsize=(11, 8.5))
     ax = sns.heatmap(acc_gap, annot=True, cmap=mint_cmap, fmt=".2f", 
                      xticklabels=flip_prob_X, yticklabels=flip_prob_E, annot_kws={"size":14},
-                     vmin=-0.1, vmax=0.4,
-                     cbar_kws={'ticks': np.linspace(-0.1, 0.4, 6)})
+                     vmin=0.0, vmax=0.25,
+                     cbar_kws={'ticks': np.linspace(0.0, 0.25, 6)})
     plt.xlabel("X Flip Probability", fontsize=26, labelpad=20)
     plt.ylabel("A Flip Probability", fontsize=26, labelpad=20)
     plt.xticks(fontsize=18)
