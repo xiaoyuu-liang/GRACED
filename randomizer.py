@@ -11,33 +11,33 @@ def config():
     overwrite = None
     db_collection = None
     if db_collection is not None:
-        ex.observers.append(seml.create_mongodb_observer(
+        ex.observers.append(seml.create_mongodb_observe(
             db_collection, overwrite=overwrite))
 
     # default params
-    dataset = 'imdb-binary'
-    seed = 42
+    dataset = 'proteins'
 
-    patience = 10
-    max_epochs = 100
+    seed = 42
+    patience = 5
+
+    max_epochs = 20
     lr = 1e-3
     weight_decay = 1e-3
 
     arch = 'GIN'
     n_hidden = 64
     p_dropout = 0.5
+    pf_plus_att = [0.22]
+    pf_minus_att = [0.44]
 
-    pf_plus_att = [0.0049]
-    pf_minus_att = [0.6555]
-
-    pf_plus_adj = [0.3260]
-    pf_minus_adj = [0.4716]
+    pf_plus_adj = [0.]
+    pf_minus_adj = [0.]
 
     n_samples_train = 1
     batch_size_train = 1024
 
     n_samples_pre_eval = 10
-    n_samples_eval = 1000
+    n_samples_eval = 100
     batch_size_eval = 1024
 
     mean_softmax = False
@@ -71,16 +71,15 @@ def run(_config, dataset, seed,
 
     sample_config_dict = {}
     for i in range(len(pf_minus_adj)):
-        for j in range(len(pf_minus_att)):
-        # j=i
-            sample_config_dict[i*5+j] = {
+        # for j in range(len(pf_minus_att)):
+        sample_config_dict[i] = {
                 'n_samples': n_samples_train,
                 'pf_plus_adj': pf_plus_adj[i],
-                'pf_plus_att': pf_plus_att[j],
+                'pf_plus_att': pf_plus_att[i],
                 'pf_minus_adj': pf_minus_adj[i],
-                'pf_minus_att': pf_minus_att[j]
-            }
-
+                'pf_minus_att': pf_minus_att[i]
+        }
+    print(sample_config_dict)
     for sample_config in sample_config_dict:
         sample_config = sample_config_dict[sample_config]
         print(f'Running with sample config {sample_config}')
@@ -239,6 +238,7 @@ def run(_config, dataset, seed,
             # 'clean_acc': acc_clean['test'],
             'majority_acc': acc_majority['test']
         }
+
         
         hparams = {
             'classifier': model.__class__.__name__.lower(),

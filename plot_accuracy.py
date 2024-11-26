@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.gridspec import GridSpec
 import argparse
 
 datasets = ['mutag', 'imdb', 'nci1', 'proteins']
@@ -142,23 +144,24 @@ def main():
     mint_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
 
     # Draw heatmap
-    plt.figure(figsize=(11, 8.5))
+    plt.figure(figsize=(10.5, 8.5))
     ax = sns.heatmap(acc_gap, annot=True, cmap=mint_cmap, fmt=".2f", 
                      xticklabels=flip_prob_X, yticklabels=flip_prob_E, annot_kws={"size":14},
                      vmin=0.0, vmax=0.25,
-                     cbar_kws={'ticks': np.linspace(0.0, 0.25, 6)})
-    plt.xlabel("X Flip Probability", fontsize=26, labelpad=20)
-    plt.ylabel("A Flip Probability", fontsize=26, labelpad=20)
+                     cbar_kws={'ticks': np.linspace(0.0, 0.25, 6), 'pad':0.02, 'shrink': 1, 'aspect': 30})
+    plt.xlabel("X Flip Probability", fontsize=30, labelpad=20)
+    plt.ylabel("A Flip Probability", fontsize=30, labelpad=20)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
     plt.tight_layout()
     plt.gca().invert_yaxis()
     # Set color bar label font size
     cbar = ax.collections[0].colorbar
-    cbar.set_label('Clean accuracy gap', size=26)
+    cbar.set_label('Clean accuracy gap', size=30)
     cbar.ax.yaxis.set_tick_params(labelsize=22)
     cbar.ax.tick_params(labelsize=22)
-
+    
+    plt.minorticks_off()
     plt.savefig(f"figs/{gap}_{dataset}.png")
     print(f"figs/{gap}_{dataset}.png saved")
     plt.show()

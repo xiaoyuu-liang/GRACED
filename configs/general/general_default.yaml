@@ -5,7 +5,7 @@ wandb: online                  # online | offline | disabled
 gpus: 4                        # Multi-gpu is not implemented on this branch
 
 resume: null            # If resume, path to ckpt file from outputs directory in main directory
-test_only: checkpoints/mutag/mpnn_pilot/epoch=979.ckpt        # Use relative path
+test_only: checkpoints/proteins/mpnn_pilot/last-v1.ckpt       # Use relative path
 
 check_val_every_n_epochs: 5
 sample_every_val: 4

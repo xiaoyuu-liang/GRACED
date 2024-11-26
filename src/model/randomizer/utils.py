@@ -26,11 +26,15 @@ def binary_perturb(data, pf_minus, pf_plus):
     data_perturbed: torch.Tensor [b, ?, ?]
         The indices of the non-zero elements after perturbation
     """
+    p = 1
+    
+    keep_mask = torch.cuda.BoolTensor(data.shape).bernoulli_(1 - p).to(data.device)
 
-    to_del = torch.cuda.BoolTensor(data.shape).bernoulli_(1 - pf_minus)
-    to_add = torch.cuda.BoolTensor(data.shape).bernoulli_(pf_plus)
-
+    to_del = torch.cuda.BoolTensor(data.shape).bernoulli_(1 - pf_minus).to(data.device)
+    to_add = torch.cuda.BoolTensor(data.shape).bernoulli_(pf_plus).to(data.device)
+    
     data_perturbed = data * to_del + (1 - data) * to_add
+    data_perturbed = data * keep_mask + data_perturbed * (~keep_mask)
     return data_perturbed
 
 
@@ -403,7 +407,8 @@ def split(labels, n_per_class=20, seed=0):
 #                                   pf_minus=pf_minus_att, pf_plus=pf_plus_att)
 
 #     per_edge_idx = sparse_perturb(data_idx=edge_idx, n=n, m=n, undirected=True,
-#                                   pf_minus=pf_minus_adj, pf_plus=pf_plus_adj)
+#                                   pf_minus=pf_minus_adj, pf_plus=pf_plus_adj0.8
+
 
 #     return per_attr_idx, per_edge_idx
 
@@ -429,7 +434,7 @@ def sample_batch_pyg(data, sample_config):
 
     pf_minus_adj = sample_config.get('pf_minus_adj', 0)
     pf_minus_att = sample_config.get('pf_minus_att', 0)
-
+    
     per_x = binary_perturb(data.x, pf_minus_att, pf_plus_att)
 
     per_edge_index = sparse_perturb_adj_batch(

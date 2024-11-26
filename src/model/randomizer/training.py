@@ -77,6 +77,9 @@ def run_epoch_pytorch(
         with torch.set_grad_enabled(train):
             pred = model(xb)
             # print(f'pred {pred}, yb {yb}')
+            pred.to(device)
+            yb.to(device)
+            # print(f"pred {pred.device}, yb {yb.device}, {device}")
             loss = F.cross_entropy(pred, yb)
             top1 = torch.argmax(pred, dim=1)
             ncorrect = torch.sum(top1 == yb)
@@ -105,7 +108,6 @@ def train_pytorch(
         model.parameters(), lr=lr, weight_decay=weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=50, gamma=0.5)
-    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
     if sample_config is not None:
         assert sample_fn is not None
@@ -114,14 +116,14 @@ def train_pytorch(
                                 sample_fn=sample_fn)
     else:
         model_partial = partial(model)
-
+    print(f"model on {model.device}")
     trace_val = []
     best_loss = np.inf
     for epoch in range(max_epochs):
         model.train()
         train_loss, train_acc, train_time = run_epoch_pytorch(
             model_partial, optimizer, dataloaders['train'], n_samples['train'],
-            train=True, data_tuple=data_tuple)
+            train=True, data_tuple=data_tuple, device=model.device)
         # wandb.log({f"Epoch {epoch + 1: >3}/{max_epochs}, "
         #              f"train loss: {train_loss:.2e}, "
         #              f"accuracy: {train_acc * 100:.2f}% ({train_time:.2f}s)"})

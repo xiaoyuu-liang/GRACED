@@ -33,9 +33,8 @@ def parse_arguments():
 
 def main():
     path, joint, singular = parse_arguments()
-    print(torch.load(path).keys())
-    cert = torch.load(path)['binary']['cert_acc']
-
+    cert = torch.load(path)
+    print(cert)
     np.set_printoptions(formatter={'float': '{: 0.2f}'.format})
     if joint:
         max_ra_adj, max_rd_adj, max_ra_att, max_rd_att = cert[0]
@@ -114,15 +113,7 @@ def main():
     cbar.set_ticks(np.linspace(0, 1, 5))
     cbar.outline.set_visible(False)
 
-    if singular == 'att':
-        color = '#f3ceef'
-    elif singular == 'adj':
-        color = '#8dc99f'
-    if joint:
-        if joint[0] == 'att':
-            color = '#8dc99f'
-        elif joint[0] == 'adj':
-            color = '#f3ceef'
+    color = "#e78555"
     level = 0.2
     for i in range(heatmap.shape[0]):
         for j in range(heatmap.shape[1]):

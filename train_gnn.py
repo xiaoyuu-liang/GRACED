@@ -27,12 +27,12 @@ parser.add_argument('--model_list', nargs='+', required=False, default=['GIN'],
                     'available model: ' + str(model_list)
                      + '\nable to choose multiple models \n'+
                      'ALL: choose all available model')
-parser.add_argument('--dataset_list', nargs='+', required=False, default=['IMDB-BINARY'],
+parser.add_argument('--dataset_list', nargs='+', required=False, default=['PROTEINS'],
                     help='target graph classification dataset list \n'+
                     'available dataset: ' + str(dataset_list)
                      + '\nable to choose multiple datasets \n'+
                      'ALL: choose all available dataset')
-parser.add_argument('--readout_list', nargs='+', required=False, default=['sum'],
+parser.add_argument('--readout_list', nargs='+', required=False, default=['avg', 'sum'],
                     help='target readout method list \n'+
                     'available readout: ' + str(readout_list)
                      + '\nable to choose multiple readout methods \n'+
@@ -79,7 +79,7 @@ parser.add_argument('--save_model', default='TRUE',
                     'TRUE/FALSE')
 
 # Model param
-parser.add_argument('--n_agg_layer', type=int, default=2,
+parser.add_argument('--n_agg_layer', type=int, default=5,
                     help='the number of graph aggregation layers')
 parser.add_argument('--agg_hidden', type=int, default=64,
                     help='size of hidden graph aggregation layer')
@@ -466,7 +466,7 @@ for dataset_name in args.dataset_list:
           
                 torch.save(model, './checkpoint_classifier/save_model/' + model_name + '/' + file_name)
                 print('Complete to save model')
-            # break 
+            break 
     
         print(acc_folds)
         # print('{}-fold cross validation avg acc (+- std): {} ({})'.format(args.n_folds, statistics.mean(acc_folds), statistics.stdev(acc_folds)))
