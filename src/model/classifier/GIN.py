@@ -158,6 +158,7 @@ class GIN(nn.Module):
         return Adj_block.to(self.device)
     
     def forward(self, data):
+        # print(len(data))
         x_list = data[0]
         adj_list = data[1]
         edge_adj_list = self.__get_edge_adj_matrix(adj_list)

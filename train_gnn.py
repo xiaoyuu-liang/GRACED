@@ -32,7 +32,7 @@ parser.add_argument('--dataset_list', nargs='+', required=False, default=['PROTE
                     'available dataset: ' + str(dataset_list)
                      + '\nable to choose multiple datasets \n'+
                      'ALL: choose all available dataset')
-parser.add_argument('--readout_list', nargs='+', required=False, default=['avg', 'sum'],
+parser.add_argument('--readout_list', nargs='+', required=False, default=['avg'],
                     help='target readout method list \n'+
                     'available readout: ' + str(readout_list)
                      + '\nable to choose multiple readout methods \n'+
@@ -466,7 +466,7 @@ for dataset_name in args.dataset_list:
           
                 torch.save(model, './checkpoint_classifier/save_model/' + model_name + '/' + file_name)
                 print('Complete to save model')
-            break 
+            # break 
     
         print(acc_folds)
         # print('{}-fold cross validation avg acc (+- std): {} ({})'.format(args.n_folds, statistics.mean(acc_folds), statistics.stdev(acc_folds)))

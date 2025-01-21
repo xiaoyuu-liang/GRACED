@@ -27,14 +27,15 @@ def config():
     arch = 'GIN'
     n_hidden = 64
     p_dropout = 0.5
-    pf_plus_att = [0.22]
-    pf_minus_att = [0.44]
 
-    pf_plus_adj = [0.]
-    pf_minus_adj = [0.]
+    pf_minus_att = [0.0]
+    pf_plus_att = [0.0001]
+
+    pf_minus_adj = [0.0]
+    pf_plus_adj = [0.0]
 
     n_samples_train = 1
-    batch_size_train = 1024
+    batch_size_train = 2048
 
     n_samples_pre_eval = 10
     n_samples_eval = 100
@@ -71,14 +72,14 @@ def run(_config, dataset, seed,
 
     sample_config_dict = {}
     for i in range(len(pf_minus_adj)):
-        # for j in range(len(pf_minus_att)):
-        sample_config_dict[i] = {
-                'n_samples': n_samples_train,
-                'pf_plus_adj': pf_plus_adj[i],
-                'pf_plus_att': pf_plus_att[i],
-                'pf_minus_adj': pf_minus_adj[i],
-                'pf_minus_att': pf_minus_att[i]
-        }
+        for j in range(len(pf_minus_att)):
+            sample_config_dict[i+j*5] = {
+                    'n_samples': n_samples_train,
+                    'pf_plus_adj': pf_plus_adj[i],
+                    'pf_plus_att': pf_plus_att[j],
+                    'pf_minus_adj': pf_minus_adj[i],
+                    'pf_minus_att': pf_minus_att[j]
+            }
     print(sample_config_dict)
     for sample_config in sample_config_dict:
         sample_config = sample_config_dict[sample_config]
@@ -140,7 +141,7 @@ def run(_config, dataset, seed,
                         agg_hidden=64,
                         fc_hidden=128,
                         dropout=0,
-                        readout='sum',
+                        readout='avg',
                         device=device).to(device)
         if arch.lower() == 'graphsage':
             model = GraphSAGE(n_feat=pyg_dataset.num_features,
@@ -239,7 +240,6 @@ def run(_config, dataset, seed,
             'majority_acc': acc_majority['test']
         }
 
-        
         hparams = {
             'classifier': model.__class__.__name__.lower(),
             'smoothing_config': {

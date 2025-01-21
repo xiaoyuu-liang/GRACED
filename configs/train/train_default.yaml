@@ -1,7 +1,7 @@
 # Training settings
-n_epochs: 1000
+n_epochs: 2000
 batch_size: 128
-lr: 0.0002
+lr: 0.00001
 # shceduler_factor: 0.9
 # shceduler_patience: 5
 clip_grad: 0.5          # float, null to disable
@@ -11,4 +11,4 @@ ema_decay: 0           # 'Amount of EMA decay, 0 means off. A reasonable value  
 progress_bar: true
 weight_decay: 1e-10
 optimizer: adamw # adamw,nadamw,nadam => nadamw for large batches, see http://arxiv.org/abs/2102.06356 for the use of nesterov momentum with large batches
-seed: 95
+seed: 117

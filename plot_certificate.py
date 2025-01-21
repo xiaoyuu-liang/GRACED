@@ -7,16 +7,6 @@ import matplotlib.colors as mcolors
 import seaborn as sns
 import argparse
 
-# checkpoints/cora/async_pilot/test_only/gcn_cora_[1-X0.01-0.65-E0.00-0.00].pth
-# checkpoints/cora/async_pilot/test_only/gcn_cora_[1-X0.00-0.00-E0.00-0.66].pth
-# checkpoints/cora/async_pilot/test_only/gcn_cora_[1-X0.01-0.65-E0.00-0.66].pth
-
-# rand_gnn_checkpoints/gcn_cora/gcn_cora_[1-X0.00-0.00-E0.00-0.66].pth
-# rand_gnn_checkpoints/gcn_cora/gcn_cora_[1-X0.01-0.65-E0.00-0.00].pth
-# rand_gnn_checkpoints/gcn_cora/gcn_cora_[1-X0.01-0.65-E0.00-0.66].pth
-
-# rand_results/cora/GCN_cora_[0.8-0.01-0.65].pth
-
 
 def parse_arguments():
     arg = argparse.ArgumentParser()
@@ -33,8 +23,9 @@ def parse_arguments():
 
 def main():
     path, joint, singular = parse_arguments()
-    cert = torch.load(path)
-    print(cert)
+    cert = torch.load(path)['multiclass']['cert_acc']
+    # cert = torch.load(path)
+    # print(cert)
     np.set_printoptions(formatter={'float': '{: 0.2f}'.format})
     if joint:
         max_ra_adj, max_rd_adj, max_ra_att, max_rd_att = cert[0]
@@ -42,7 +33,7 @@ def main():
         x_coords_adj, y_coords_adj, x_coords_att, y_coords_att = cert[1]
         cert_acc = cert[2]
 
-        heatmap = np.zeros((14, 20, 16, 22))
+        heatmap = np.zeros((6, 18, 8, 18))
         for x_adj, y_adj, x_att, y_att, acc in zip(x_coords_adj, y_coords_adj, x_coords_att, y_coords_att, cert_acc):
             heatmap[x_adj, y_adj, x_att, y_att] = acc
         heatmap[0, 0, 0, 0] = torch.load(path)['majority_acc']
@@ -60,7 +51,7 @@ def main():
         print(f'max radius for singular certificate: {max_ra, max_rd}')
         x_coords, y_coords = cert[1]
         acc = cert[2]
-        heatmap = np.zeros((16, 22))
+        heatmap = np.zeros((8, 18))
         for x, y, acc in zip(x_coords, y_coords, acc):
             heatmap[x, y] = acc
         heatmap[0, 0] = torch.load(path)['majority_acc']
@@ -161,7 +152,8 @@ def main():
     
     dir_name = os.path.dirname(path)
     parts = dir_name.split('/')
-    ckpt = parts[-2]
+    # ckpt = parts[-2]
+    ckpt = 'CiDer'
     smoothing_config = os.path.splitext(os.path.basename(path))[0]
 
     if joint:

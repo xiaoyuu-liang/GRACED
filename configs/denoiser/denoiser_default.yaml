@@ -2,10 +2,10 @@ attr_noise_scale: 300
 adj_noise_scale: 0
 
 alpha: 0.01
-pre_n_samples: 1
+pre_n_samples: 10
 n_samples: 100
 
 certify: False
 
 classifier: 'GIN'
-classifier_path: 'checkpoint_classifier/backup/GIN_PROTEINS_sum_0_5_h64.pt'
+classifier_path: 'checkpoint_classifier/save_model/GIN/GIN_PROTEINS_avg_0_5_h64.pt'

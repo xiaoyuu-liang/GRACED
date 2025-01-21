@@ -76,7 +76,6 @@ def run_epoch_pytorch(
         # forward
         with torch.set_grad_enabled(train):
             pred = model(xb)
-            # print(f'pred {pred}, yb {yb}')
             pred.to(device)
             yb.to(device)
             # print(f"pred {pred.device}, yb {yb.device}, {device}")
